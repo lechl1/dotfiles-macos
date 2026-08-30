@@ -56,9 +56,10 @@ alt-3 = 'workspace 3'
 alt-4 = 'workspace 4'
 alt-5 = 'workspace 5'
 alt-6 = 'workspace 6'
-alt-7 = 'workspace 7'
-alt-8 = 'workspace 8'
-alt-9 = 'workspace 9'
+# Alt+7 through Alt+9 are deliberately unbound, so those chords pass through to
+# the focused application. Workspaces 7-9 still exist and alt-shift-7..9 can
+# still send a window to them — reach them with the workspace commands or a
+# binding of your own rather than by number.
 
 alt-shift-1 = 'move-node-to-workspace 1'
 alt-shift-2 = 'move-node-to-workspace 2'
