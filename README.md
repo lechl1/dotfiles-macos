@@ -1,12 +1,12 @@
 # dotfiles-macos
 
 macOS-specific dotfiles. The cross-platform half lives in
-[dotfiles-common](https://github.com/lechl1/dotfiles-common), wired in here as a
+[dotfiles-dev](https://github.com/lechl1/dotfiles-dev), wired in here as a
 submodule at `common/`.
 
 ```
 dotfiles-macos/                the stow directory
-├── common/                    submodule -> dotfiles-common (flat: it IS the package)
+├── common/                    submodule -> dotfiles-dev (flat: it IS the package)
 └── macos/                     the macOS package
     ├── .Brewfile              brew bundle manifest
     ├── .paneru.toml
@@ -38,7 +38,7 @@ links file by file instead of folding directories, copies fonts into
 `~/Library/Fonts` (CoreText ignores symlinked fonts), and absorbs pre-existing
 real files rather than refusing. Its `--relink` flag repoints links that already
 exist but aim elsewhere, which is what you want when an older checkout is being
-replaced. See the dotfiles-common README for the details.
+replaced. See the dotfiles-dev README for the details.
 
 ## What's here
 
