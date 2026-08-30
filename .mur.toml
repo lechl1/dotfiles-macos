@@ -1,0 +1,195 @@
+# Place a copy of this config to ~/.mur.toml
+# After that, you can edit ~/.mur.toml to your liking
+
+# Config version for compatibility and deprecations
+# Fallback value (if you omit the key): config-version = 1
+config-version = 2
+
+# mur — opt into the predefined-grid layout engine. Required for the
+# stacking-* commands bound below to actually fire.
+experimental-stacking-layout = true
+
+# You can use it to add commands that run after AeroSpace startup.
+# Available commands : https://nikitabobko.github.io/AeroSpace/commands
+after-startup-command = []
+
+# Start AeroSpace at login
+start-at-login = false
+
+# Automatically reload the config when the config file is saved
+# After setting this to true, reload once manually to start the auto-reloading
+auto-reload-config = false
+
+# Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# See: https://nikitabobko.github.io/AeroSpace/guide#layouts
+# The 'accordion-padding' specifies the size of accordion padding
+# You can set 0 to disable the padding feature
+accordion-padding = 30
+
+# Possible values: tiles|accordion
+default-root-container-layout = 'tiles'
+
+# Possible values: horizontal|vertical|auto
+# 'auto' means: wide monitor (anything wider than high) gets horizontal orientation,
+#               tall monitor (anything higher than wide) gets vertical orientation
+default-root-container-orientation = 'auto'
+
+# Mouse follows focus when focused monitor changes
+# Drop it from your config, if you don't like this behavior
+# See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
+# See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
+# Fallback value (if you omit the key): on-focused-monitor-changed = []
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
+# Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
+# Also see: https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
+automatically-unhide-macos-hidden-apps = false
+
+# List of workspaces that should stay alive even when they contain no windows,
+# even when they are invisible.
+# This config option is only available since 'config-version = 2'
+# Fallback value (if you omit the key): persistent-workspaces = []
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B",
+                         "C", "D", "E", "F", "G", "I", "M", "N", "O", "P", "Q",
+                         "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+
+# A callback that runs every time binding mode changes
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+# See: https://nikitabobko.github.io/AeroSpace/commands#mode
+on-mode-changed = []
+
+# Possible values: (qwerty|dvorak|colemak)
+# See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
+[key-mapping]
+    preset = 'qwerty'
+
+# Gaps between windows (inner-*) and between monitor edges (outer-*).
+[gaps]
+    inner.horizontal = 0
+    inner.vertical =   0
+    outer.left =       0
+    outer.bottom =     0
+    outer.top =        0
+    outer.right =      0
+
+# 'main' binding mode declaration
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+# 'main' binding mode must be always presented
+# Fallback value (if you omit the key): mode.main.binding = {}
+[mode.main.binding]
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#layout
+    alt-slash = 'layout tiles horizontal vertical'
+    alt-comma = 'layout accordion horizontal vertical'
+
+    # mur — positionally-aware focus across the stacking layout.
+    # Picks the spatial neighbor in the requested direction by lane/slot
+    # adjacency (not tree order). Falls back to cycling overlapping
+    # windows in the same cell when there's no neighbor in that direction.
+    cmd-shift-left  = 'stacking-focus-dir left'
+    cmd-shift-down  = 'stacking-focus-dir down'
+    cmd-shift-up    = 'stacking-focus-dir up'
+    cmd-shift-right = 'stacking-focus-dir right'
+
+    # mur — move the focused window via the stacking layout
+    # (`stacking-move`). The upstream tree-based `move` command is still
+    # available as a separate feature; bind it manually if you want it.
+    cmd-alt-left  = 'stacking-move left'
+    cmd-alt-down  = 'stacking-move down'
+    cmd-alt-up    = 'stacking-move up'
+    cmd-alt-right = 'stacking-move right'
+    # kept as the previous binding for muscle memory
+    ctrl-alt-left  = 'stacking-move left'
+    ctrl-alt-down  = 'stacking-move down'
+    ctrl-alt-up    = 'stacking-move up'
+    ctrl-alt-right = 'stacking-move right'
+
+    # mur — resize the focused column / row TOWARDS THE CENTRE
+    # (`stacking-resize`): the column width changes by absolute amount so
+    # fit-or-center keeps the strip centred. Arrow towards centre grows.
+    cmd-alt-shift-left  = 'stacking-resize left'
+    cmd-alt-shift-down  = 'stacking-resize down'
+    cmd-alt-shift-up    = 'stacking-resize up'
+    cmd-alt-shift-right = 'stacking-resize right'
+
+    # mur — grow / shrink the focused window's LANE, explicitly (not
+    # positionally like `stacking-resize`): in landscape the lane is the
+    # COLUMN, so +/- change its WIDTH; in portrait the lane is the ROW, so
+    # +/- change its HEIGHT. Width is absolute, so the strip re-centres.
+    #
+    # NB: mur binds PHYSICAL key positions (US names), not the characters
+    # this keyboard produces. On the Norwegian layout "+" sits on the
+    # physical `minus` key and "-" on the physical `slash` key, so those
+    # are the names to bind — `equal` is the dead-key ´ here, unusable.
+    cmd-alt-minus       = 'stacking-resize-lane grow'     # "+"
+    cmd-alt-slash       = 'stacking-resize-lane shrink'   # "-"
+    cmd-alt-keypadPlus  = 'stacking-resize-lane grow'
+    cmd-alt-keypadMinus = 'stacking-resize-lane shrink'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#resize
+    # Same physical-vs-printed key story as above: `minus` is "+", `slash` is "-".
+    alt-minus = 'resize smart +50'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
+    alt-1 = 'workspace 1'
+    alt-2 = 'workspace 2'
+    alt-3 = 'workspace 3'
+    alt-4 = 'workspace 4'
+    alt-5 = 'workspace 5'
+    alt-6 = 'workspace 6'
+    # Alt+7 through Alt+9 deliberately unbound: a window manager binding is a
+    # system-wide grab, so these never reached the focused application.
+    # Workspaces 7-9 still exist — reach them with `mur workspace 7` or the
+    # alt-shift-7..9 bindings below, which still move a window there.
+    # Alt+A through Alt+Z deliberately unbound, along with Alt+7..9 above.
+    # Every one was a system-wide grab that swallowed the chord before the
+    # focused application saw it — Alt+letter is how macOS types many special
+    # characters, and how readline/ZLE take word motions.
+    #
+    # The lettered workspaces still exist; they just have no single-key
+    # shortcut. Reach one with `mur workspace X`, and note the alt-shift-<letter>
+    # bindings below still move a window to it.
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
+    alt-shift-1 = 'move-node-to-workspace 1'
+    alt-shift-2 = 'move-node-to-workspace 2'
+    alt-shift-3 = 'move-node-to-workspace 3'
+    alt-shift-4 = 'move-node-to-workspace 4'
+    alt-shift-5 = 'move-node-to-workspace 5'
+    alt-shift-6 = 'move-node-to-workspace 6'
+    # Alt+Shift+7..9 unbound, matching Alt+7..9 above — 1-6 are the workspaces
+    # actually in use, and every chord past that stays with the application.
+    # Alt+Shift+A through Alt+Shift+Z deliberately unbound, matching the
+    # Alt+<letter> switches above. Send a window to a lettered workspace with
+    # `mur move-node-to-workspace X` instead.
+    #
+    # Alt+Shift+1..9 below are left alone: those workspaces still have their
+    # Alt+1..6 switches, so the pair stays coherent.
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
+    alt-tab = 'workspace-back-and-forth'
+    # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
+    alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#mode
+    alt-shift-semicolon = 'mode service'
+
+# 'service' binding mode declaration.
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+    r = ['flatten-workspace-tree', 'mode main'] # reset layout
+    f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
+    backspace = ['close-all-windows-but-current', 'mode main']
+
+    # sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
+    #s = ['layout sticky tiling', 'mode main']
+
+    alt-shift-left  = ['join-with left', 'mode main']
+    alt-shift-down  = ['join-with down', 'mode main']
+    alt-shift-up    = ['join-with up', 'mode main']
+    alt-shift-right = ['join-with right', 'mode main']
