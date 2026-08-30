@@ -1,44 +1,56 @@
 # dotfiles-macos
 
-macOS-specific dotfiles. The cross-platform half lives in
-[dotfiles-dev](https://github.com/lechl1/dotfiles-dev), wired in here as a
-submodule at `common/`.
+macOS-specific dotfiles. The repo is **flat** — its root *is* the macOS package,
+so `.Brewfile` installs to `~/.Brewfile`. The shared half lives in
+[dotfiles-dev](https://github.com/lechl1/dotfiles-dev) (private), mounted here
+as a submodule at `common/`.
 
 ```
-dotfiles-macos/                the stow directory
-├── common/                    submodule -> dotfiles-dev (flat: it IS the package)
-└── macos/                     the macOS package
-    ├── .Brewfile              brew bundle manifest
-    ├── .paneru.toml
-    ├── .config/aerospace/     tiling WM
-    ├── .local/bin/            default-terminal, terminal-to-ghostty
-    └── Library/LaunchAgents/  local.terminal-to-ghostty.plist
+dotfiles-macos/
+├── .Brewfile              brew bundle manifest
+├── .paneru.toml
+├── .config/aerospace/     tiling WM
+├── .local/bin/            default-terminal, terminal-to-ghostty
+├── Library/
+│   ├── Fonts/             links into common/fonts/ — copied in, not linked
+│   └── LaunchAgents/      local.terminal-to-ghostty.plist
+├── .stow-os               names this package's OS to common/stow.sh
+└── common/                submodule -> dotfiles-dev (flat: it IS the package)
 ```
-
-Both packages sit directly in the repo root, which is what GNU Stow expects, so
-either installer works.
 
 ## Install
 
 ```sh
-git clone --recurse-submodules https://github.com/lechl1/dotfiles-macos.git ~/.dotfiles-macos
-cd ~/.dotfiles-macos
-
-stow -t ~ common macos      # GNU Stow
-./common/stow.sh            # or the bundled installer
-
+git clone --recurse-submodules git@github.com:lechl1/dotfiles-macos.git ~/.dotfiles-macos
+~/.dotfiles-macos/common/stow.sh
 brew bundle --file ~/.Brewfile
 ```
 
-`--recurse-submodules` matters: `macos/Library/Fonts/CodeNewRoman.otf` is a link
-into `common/fonts/`, and an empty `common/` leaves it dangling.
+`stow.sh` installs both packages in one go: the shared config from `common/`,
+and this repo because `.stow-os` says `macos` and that matches the machine.
 
-The bundled `common/stow.sh` is not a reimplementation for its own sake — it
-links file by file instead of folding directories, copies fonts into
-`~/Library/Fonts` (CoreText ignores symlinked fonts), and absorbs pre-existing
-real files rather than refusing. Its `--relink` flag repoints links that already
-exist but aim elsewhere, which is what you want when an older checkout is being
-replaced. See the dotfiles-dev README for the details.
+`--recurse-submodules` matters: `Library/Fonts/*` links into `common/fonts/`, so
+an empty `common/` leaves the fonts dangling. Since dotfiles-dev is private, the
+submodule only populates for accounts that can read it.
+
+### With plain GNU Stow
+
+Both packages are stowable, but they now live in *different* stow directories —
+this repo's root is one package, and `common/` inside it is the other — so it
+takes two invocations, and both need `--no-folding`:
+
+```sh
+cd ~
+stow --no-folding -d ~ -t ~ .dotfiles-macos
+stow --no-folding -d ~/.dotfiles-macos -t ~ common
+```
+
+`--no-folding` is not optional here. Without it Stow folds `~/.config` into a
+single symlink to whichever package it stows first, and the second package then
+fails with `cannot read directory: ../.dotfiles-macos/.config/.config` — Stow's
+unfolding assumes every package shares one stow directory, which a flat repo
+plus a nested submodule breaks. `--no-folding` links file by file instead, which
+is what `stow.sh` does natively.
 
 ## What's here
 
@@ -46,6 +58,12 @@ replaced. See the dotfiles-dev README for the details.
 
 **Aerospace** — tiling window manager. `alt`+arrows to focus, `alt-shift`+arrows
 to move, `alt`+digit for workspaces.
+
+**Fonts** — the DejaVu Sans Mono Nerd Font faces Ghostty uses, plus
+CodeNewRoman. These are links into `common/fonts/`, and `stow.sh` *copies* them
+into `~/Library/Fonts` rather than linking, because CoreText silently ignores
+symlinked fonts. They are carried in the repo instead of installed by a cask, so
+the terminal config doesn't depend on a package outside it.
 
 **`default-terminal`** — points LaunchServices' shell-script and unix-executable
 types at Ghostty, so double-clicking a `.sh` or `.command` opens Ghostty rather

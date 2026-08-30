@@ -1,0 +1,32 @@
+# Files at the root of this package that must NOT be linked into $HOME.
+#
+# The repo is flat — its root *is* the macOS package — so repo bookkeeping and
+# the common/ submodule sit alongside the dotfiles and have to be excluded by
+# name. GNU Stow's default ignore list already covers some of this, but a
+# package-local .stow-local-ignore REPLACES that default list rather than adding
+# to it, so everything has to be spelled out here.
+#
+# Patterns are regexes and must satisfy two consumers:
+#   * GNU Stow anchors each pattern at both ends, matching the basename when the
+#     pattern has no slash in it.
+#   * common/stow.sh searches unanchored against the path with a leading slash.
+# Slash-free basename patterns behave correctly under both.
+
+# Repo bookkeeping
+README\.md
+\.git
+\.gitignore
+\.gitattributes
+\.gitmodules
+\.stow-local-ignore
+\.DS_Store
+
+# The shared package, mounted here as a submodule. It is stowed in its own
+# right (it is the other package), so linking it from here would put a
+# ~/common symlink in $HOME and duplicate every file underneath it.
+common
+
+# Names this repo's package to stow.sh, which otherwise cannot tell whether the
+# directory above the submodule is a per-OS package or just wherever the
+# checkout happens to live. Not config, so never linked.
+\.stow-os
