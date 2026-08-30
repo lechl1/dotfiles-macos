@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runs ~/.local/bin/terminal-to-ghostty for the whole login session: it watches
+  for Terminal.app launching and swaps in a Ghostty window instead. See the
+  comments in that script for why this can't be done by changing Terminal.app.
+
+  Load:    launchctl bootstrap gui/$UID ~/Library/LaunchAgents/local.terminal-to-ghostty.plist
+  Unload:  launchctl bootout gui/$UID/local.terminal-to-ghostty
+  Status:  launchctl print gui/$UID/local.terminal-to-ghostty
+
+  To stop the swapping without unloading anything, `touch
+  ~/.terminal-to-ghostty-off`; the agent keeps running but leaves Terminal be.
+
+  It must be an Agent rather than a Daemon: NSWorkspace's launch notifications
+  only exist inside a GUI login session. /bin/sh wraps the script because
+  launchd does not expand ~ or $HOME in ProgramArguments, so the path has to be
+  resolved by a shell at run time to keep this file free of a hardcoded home.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>local.terminal-to-ghostty</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<string>exec "$HOME/.local/bin/terminal-to-ghostty"</string>
+	</array>
+
+	<key>RunAtLoad</key>
+	<true/>
+
+	<!-- The watcher is a long-lived observer; if it ever exits, bring it back. -->
+	<key>KeepAlive</key>
+	<true/>
+
+	<!-- The swift shebang recompiles the script on each start (~seconds). Don't
+	     let a crash-loop spin the CPU. -->
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+
+	<key>StandardErrorPath</key>
+	<string>/tmp/terminal-to-ghostty.log</string>
+</dict>
+</plist>

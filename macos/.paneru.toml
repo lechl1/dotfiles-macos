@@ -1,0 +1,57 @@
+# Paneru — a niri-style scrollable/columnar tiling WM for macOS.
+# https://github.com/karinushka/paneru  (full reference: CONFIGURATION.md)
+#
+# Modeled on my Linux "naru" (niri fork) setup: each window is a column with a
+# preset width, columns never resize to fill when a neighbour opens or closes,
+# and the focused column auto-centers instead of stretching edge-to-edge.
+#
+# Lives at ~/.paneru.toml (not ~/.config) on purpose: the paneru daemon runs
+# under launchd and does NOT inherit the shell's $XDG_CONFIG_HOME, but $HOME is
+# always set, and paneru checks $HOME/.paneru.toml unconditionally.
+
+[options]
+# naru preset-column-widths — 1/3, 1/2, 2/3 of the output. window_resize
+# (alt-r) cycles through these, mirroring naru's switch-preset-column-width.
+preset_column_widths = [0.33333, 0.5, 0.66667]
+
+# The whole point: naru's auto-fit-or-center. Keep the focused column centered
+# on screen; columns hold their preset width rather than filling the width.
+auto_center = true
+
+# naru left pointer-warp and focus-follows-mouse off (both commented out in
+# config.kdl), so keep them off here too. Flip to taste.
+focus_follows_mouse = false
+mouse_follows_focus = false
+
+[bindings]
+# alt is the modifier my AeroSpace + naru muscle memory already uses.
+
+# --- Focus: west/east move between columns, north/south within a stack ---
+window_focus_west  = "alt - left"
+window_focus_east  = "alt - right"
+window_focus_north = "alt - up"
+window_focus_south = "alt - down"
+
+# --- Move / swap the focused window (naru Mod+Shift+Arrow) ---
+window_swap_west  = "alt + shift - left"
+window_swap_east  = "alt + shift - right"
+window_swap_north = "alt + shift - up"
+window_swap_south = "alt + shift - down"
+
+# --- Sizing & centering ---
+window_center    = "alt - c"             # naru Mod+C  (center-column)
+window_resize    = "alt - r"             # cycle preset widths — naru Mod+R
+window_grow      = "alt + ctrl - right"  # naru Mod+Alt resize / AeroSpace alt-ctrl
+window_shrink    = "alt + ctrl - left"
+window_fullwidth = "alt - f"             # temporarily fill the width
+window_equalize  = "alt + shift - e"     # equalize visible column widths
+window_stack     = "alt + shift - i"     # stack window into the current column
+window_unstack   = "alt + shift - o"
+
+# --- Daemon control ---
+quit    = "alt + shift - q"
+restart = "alt + shift - r"
+
+# Virtual workspaces (window_virtualnum_<n> / window_virtualsendnum_<n>) are
+# available too — left unbound here in favour of native macOS Spaces. See
+# CONFIGURATION.md if you want in-paneru workspaces instead.

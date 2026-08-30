@@ -1,0 +1,6 @@
+# Track fonts as plain binary blobs (no git-lfs). `binary` is git's built-in
+# macro for `-diff -merge -text`, so these are stored/checked out verbatim.
+*.otf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

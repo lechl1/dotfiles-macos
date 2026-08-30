@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# Point LaunchServices' terminal-ish document types at Ghostty (or back at
+# Terminal.app).  Usage:  default-terminal [ghostty|terminal]   (default: ghostty)
+#
+# macOS has no global "default terminal" setting the way it has a default
+# browser — LaunchServices only maps document types and URL schemes to apps.
+# "Make Ghostty the default terminal" therefore decomposes into three parts,
+# and only the first is scriptable:
+#
+#   1. File types  — double-clicking a shell script or a unix executable runs
+#                    it in Ghostty. That's what this script does.
+#   2. Finder      — Ghostty ships NSServices ("New Ghostty Window/Tab Here").
+#                    Enable them in System Settings → Keyboard → Keyboard
+#                    Shortcuts → Services → Files and Folders, and untick
+#                    Terminal's "New Terminal at Folder" there at the same
+#                    time. Not scriptable in any stable way; do it once by hand.
+#   3. Other apps  — anything that spawns an external terminal keeps its own
+#                    setting (VS Code's terminal.external.osxExec, JetBrains'
+#                    Tools → Terminal, git GUIs). LaunchServices doesn't reach
+#                    them.
+#
+# Unreachable at any price: ssh:// telnet:// x-man-page://. Ghostty's
+# Info.plist declares no CFBundleURLTypes at all, so there is no bundle id to
+# point those schemes at — they stay with Terminal.app.
+#
+# Why a script and not duti's own settings file (~/.duti): duti reads that file
+# but applies it unreliably — a comment line of three or more words is enough
+# to make it report "setting <app> as handler for <uti>" for every entry while
+# LaunchServices keeps the old handler. Per-UTI `duti -s` calls are the path
+# that actually works, so that's what this loops over.
+#
+# Two LaunchServices behaviours to know about, both observed on macOS 26:
+#
+#   * The write is asynchronous. It lands within a second or two, but a read
+#     issued immediately afterwards still returns the old handler — hence the
+#     set-everything-then-verify structure below rather than a check per line.
+#   * Repeated changes to the same content type stop applying. After flipping
+#     public.shell-script back and forth several times in quick succession,
+#     every subsequent write was silently dropped: duti still exits 0, nothing
+#     is written to
+#     ~/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist,
+#     and the previous handler stands. It isn't specific to reverting — once in
+#     that state, *no* app could be set for the type, Terminal and TextEdit
+#     included — and it had not cleared after a two-minute pause. How long it
+#     lasts, and whether it needs a `killall lsd` or a logout to clear, is
+#     untested. Setting Ghostty from a clean state works reliably; it is
+#     re-setting the same type over and over that trips it.
+#
+#     So if `default-terminal terminal` prints FAIL for every line, the
+#     dependable way back is Finder: select a .sh, Get Info, set "Open with:"
+#     to Terminal, then "Change All…".
+set -euo pipefail
+
+case "${1:-ghostty}" in
+    ghostty)  bundle=com.mitchellh.ghostty ;;
+    terminal) bundle=com.apple.Terminal ;;
+    *) echo "usage: ${0##*/} [ghostty|terminal]" >&2; exit 2 ;;
+esac
+
+command -v duti >/dev/null || { echo "duti not installed (brew install duti)" >&2; exit 1; }
+
+# Deliberately absent: public.directory. Ghostty declares it — that's what
+# powers the Finder Services above — but making it the *default* handler means
+# double-clicking a folder opens a terminal instead of a Finder window.
+utis=(
+    public.shell-script              # .sh
+    public.zsh-script                # .zsh
+    public.csh-script                # .csh
+    com.apple.terminal.shell-script  # .command, .tool
+    public.unix-executable           # binaries with no extension
+)
+
+# Two passes on purpose. duti exits 0 even when a write doesn't stick, so the
+# handler has to be read back rather than trusting its exit status — but
+# LaunchServices applies the write asynchronously, and a read issued right
+# after the set still returns the *old* handler. Setting everything first and
+# verifying afterwards gives each write the other writes' worth of time, and
+# the poll below covers the rest; verifying inline instead reports failures
+# that aren't real (and, worse, reports "ok" whenever the previous value
+# happened to already match).
+for uti in "${utis[@]}"; do
+    duti -s "$bundle" "$uti" all 2>/dev/null || true
+done
+
+status=0
+for uti in "${utis[@]}"; do
+    got=""
+    for _ in $(seq 20); do          # up to ~10s per type
+        got=$(duti -d "$uti" 2>/dev/null || true)
+        [[ "$got" == "$bundle" ]] && break
+        sleep 0.5
+    done
+
+    if [[ "$got" == "$bundle" ]]; then
+        printf '  ok    %-32s -> %s\n' "$uti" "$bundle"
+    else
+        printf '  FAIL  %-32s -> %s (still %s)\n' "$uti" "$bundle" "${got:-unset}" >&2
+        status=1
+    fi
+done
+
+exit "$status"

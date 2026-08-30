@@ -1,0 +1,84 @@
+#!/usr/bin/env swift
+//
+// Watch for Terminal.app launching and swap it for Ghostty.
+//
+// Terminal.app itself cannot be changed: it lives on the sealed system volume
+// (/System/Applications/Utilities/Terminal.app), so it can't be edited,
+// replaced, or wrapped, and macOS has no supported "when app A launches, open
+// app B instead" mechanism. What is possible is to notice the launch and react
+// to it, which is what this does — Terminal still starts for a moment, then is
+// killed and Ghostty takes its place.
+//
+// Runs as a LaunchAgent; see ~/Library/LaunchAgents/local.terminal-to-ghostty.plist.
+// Written as a `swift` shebang script rather than a compiled binary so it
+// stays readable text in the dotfiles repo; the toolchain compiles it on each
+// launch, which happens once at login.
+//
+// Escape hatch: `touch ~/.terminal-to-ghostty-off` and Terminal is left alone
+// until that file is removed — no need to unload the agent to get a working
+// Terminal back (useful when Ghostty itself is what's broken).
+//
+// Known limits, both inherent to reacting after the fact:
+//   * `open -a Terminal some.command` loses the argument — Ghostty opens, but
+//     not the file. Double-clicked scripts don't hit this: those types are
+//     mapped straight to Ghostty by ~/.local/bin/default-terminal, so Terminal
+//     is never launched for them in the first place.
+//   * Anything Terminal was launched to run dies with it.
+
+import AppKit
+
+let terminalBundleID = "com.apple.Terminal"
+let ghosttyBundleID = "com.mitchellh.ghostty"
+let disableFlag = FileManager.default
+    .homeDirectoryForCurrentUser
+    .appendingPathComponent(".terminal-to-ghostty-off")
+    .path
+
+let workspace = NSWorkspace.shared
+
+workspace.notificationCenter.addObserver(
+    forName: NSWorkspace.didLaunchApplicationNotification,
+    object: nil,
+    queue: .main
+) { note in
+    guard
+        let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+        app.bundleIdentifier == terminalBundleID
+    else { return }
+
+    if FileManager.default.fileExists(atPath: disableFlag) { return }
+
+    // "when available": no Ghostty installed (or it was moved) means Terminal
+    // is left to open normally, rather than the user losing both.
+    guard let ghostty = workspace.urlForApplication(withBundleIdentifier: ghosttyBundleID) else { return }
+
+    let config = NSWorkspace.OpenConfiguration()
+    config.activates = true
+    config.createsNewApplicationInstance = false
+
+    // Open the home directory rather than just activating the app. Ghostty
+    // declares public.directory as a document type (the same claim that powers
+    // its "New Ghostty Window Here" Finder service), so handing it a folder
+    // opens a *new window* there — which is what clicking Terminal is asking
+    // for. Bare activation only produces a window when Ghostty has none; if it
+    // is already running with a window, activation just brings it forward and
+    // the click appears to do nothing. Home matches where Terminal itself
+    // would have opened.
+    let home = FileManager.default.homeDirectoryForCurrentUser
+
+    workspace.open([home], withApplicationAt: ghostty, configuration: config) { runningGhostty, error in
+        // Only kill Terminal once Ghostty is actually up. If the launch failed,
+        // leave Terminal alone — better a terminal you didn't want than none.
+        guard runningGhostty != nil, error == nil else { return }
+
+        // forceTerminate (SIGKILL) rather than terminate(): a graceful quit
+        // goes through an AppleEvent, which makes macOS treat this as one app
+        // controlling another and demands Automation (TCC) approval that a
+        // launchd agent can't usefully prompt for. Terminal has been alive for
+        // a few hundred milliseconds at this point and owns nothing worth
+        // saving.
+        app.forceTerminate()
+    }
+}
+
+RunLoop.main.run()
