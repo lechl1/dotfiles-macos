@@ -136,7 +136,10 @@ brew "yq"
 brew "zsh"
 # Enable Windows-like alt-tab
 cask "alt-tab"
-cask "font-dejavu-sans-mono-nerd-font"
+# font-dejavu-sans-mono-nerd-font is deliberately absent: the four Mono faces
+# Ghostty actually uses are vendored in common/fonts/ and installed by stow.sh,
+# so the terminal config no longer depends on a cask being present. Re-adding it
+# would install a second copy of the same family.
 cask "font-hack-nerd-font"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-symbols-only-nerd-font"
