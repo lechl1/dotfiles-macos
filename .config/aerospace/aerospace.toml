@@ -38,19 +38,17 @@ cmd-alt-down = 'focus down'
 cmd-alt-up = 'focus up'
 cmd-alt-right = 'focus right'
 
-# Move the focused window. Same arrows as focus, one modifier along.
-ctrl-alt-left = 'move left'
-ctrl-alt-down = 'move down'
-ctrl-alt-up = 'move up'
-ctrl-alt-right = 'move right'
+# Move the focused window. Focus plus Ctrl, so the two share the Cmd+Alt base.
+ctrl-alt-cmd-left = 'move left'
+ctrl-alt-cmd-down = 'move down'
+ctrl-alt-cmd-up = 'move up'
+ctrl-alt-cmd-right = 'move right'
 
-# Resize. Rehomed onto Alt+Shift, which move just vacated: Ctrl+Alt used to
-# resize and is now move, so leaving these here would have been a duplicate
-# binding for the same chord.
-alt-shift-left = 'resize width -50'
-alt-shift-right = 'resize width +50'
-alt-shift-down = 'resize height -50'
-alt-shift-up = 'resize height +50'
+# Resize, unchanged.
+alt-ctrl-left = 'resize width -50'
+alt-ctrl-right = 'resize width +50'
+alt-ctrl-down = 'resize height -50'
+alt-ctrl-up = 'resize height +50'
 
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
