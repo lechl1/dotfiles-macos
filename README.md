@@ -22,7 +22,7 @@ dotfiles-macos/
 
 ```sh
 git clone --recurse-submodules git@github.com:lechl1/dotfiles-macos.git ~/.dotfiles-macos
-~/.dotfiles-macos/common/stow.sh
+~/.dotfiles-macos/common/stow.sh   # installs both packages
 brew bundle --file ~/.Brewfile
 ```
 
@@ -35,22 +35,34 @@ submodule only populates for accounts that can read it.
 
 ### With plain GNU Stow
 
-Both packages are stowable, but they now live in *different* stow directories —
-this repo's root is one package, and `common/` inside it is the other — so it
-takes two invocations, and both need `--no-folding`:
+One command, because this repo bridges the submodule:
 
 ```sh
-cd ~
 stow --no-folding -d ~ -t ~ .dotfiles-macos
-stow --no-folding -d ~/.dotfiles-macos -t ~ common
 ```
 
-`--no-folding` is not optional here. Without it Stow folds `~/.config` into a
-single symlink to whichever package it stows first, and the second package then
-fails with `cannot read directory: ../.dotfiles-macos/.config/.config` — Stow's
-unfolding assumes every package shares one stow directory, which a flat repo
-plus a nested submodule breaks. `--no-folding` links file by file instead, which
-is what `stow.sh` does natively.
+**How the bridging works.** The root carries relative symlinks pointing at every
+entry of the shared package — `.zshrc -> common/.zshrc`, and one level deeper
+where both packages own a directory (`.config/tmux -> ../common/.config/tmux`,
+`.local/bin/mnt -> ../../common/.local/bin/mnt`, since `.config` and `.local`
+exist in both). Stowing this one directory therefore installs both packages, and
+`~/.zshrc` ends up pointing here, which points into `common/`.
+
+That replaced an earlier two-command form, which was needed because the packages
+live in different stow directories: Stow would fold `~/.config` into a symlink to
+whichever package it stowed first, then fail on the second with
+`cannot read directory: ../.dotfiles-macos/.config/.config`, its unfolding logic
+assuming every package shares one stow directory.
+
+`--no-folding` is still wanted: without it Stow folds `~/.config` and `~/.local`
+into symlinks *into this repo*, so anything an application later writes under
+them lands in the checkout. It links file by file instead, which is what
+`stow.sh` does natively.
+
+**Adding to the shared package.** A new file in dotfiles-dev needs a bridge here
+unless it sits under a directory already bridged. `stow.sh` checks this on every
+run and warns by name for anything it can't reach, so the failure is visible
+rather than a config that silently never installs.
 
 ## What's here
 
