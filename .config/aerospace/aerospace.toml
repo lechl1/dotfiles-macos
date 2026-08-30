@@ -28,20 +28,29 @@ cmd-shift-t = 'exec-and-forget open -na Ghostty'
 
 alt-comma = 'layout tiles horizontal vertical'
 
-alt-left = 'focus left'
-alt-down = 'focus down'
-alt-up = 'focus up'
-alt-right = 'focus right'
+# Focus. Cmd+Alt rather than bare Alt+arrow: a window manager binding is a
+# system-wide grab, so plain alt-left never reached the terminal — and
+# .rc.d/keybindings.rc binds Alt+Left/Right to backward-word/forward-word in
+# both zsh and bash. Moving focus up to Cmd+Alt hands the arrows back to the
+# shell.
+cmd-alt-left = 'focus left'
+cmd-alt-down = 'focus down'
+cmd-alt-up = 'focus up'
+cmd-alt-right = 'focus right'
 
-alt-shift-left = 'move left'
-alt-shift-down = 'move down'
-alt-shift-up = 'move up'
-alt-shift-right = 'move right'
+# Move the focused window. Same arrows as focus, one modifier along.
+ctrl-alt-left = 'move left'
+ctrl-alt-down = 'move down'
+ctrl-alt-up = 'move up'
+ctrl-alt-right = 'move right'
 
-alt-ctrl-left = 'resize width -50'
-alt-ctrl-right = 'resize width +50'
-alt-ctrl-down = 'resize height -50'
-alt-ctrl-up = 'resize height +50'
+# Resize. Rehomed onto Alt+Shift, which move just vacated: Ctrl+Alt used to
+# resize and is now move, so leaving these here would have been a duplicate
+# binding for the same chord.
+alt-shift-left = 'resize width -50'
+alt-shift-right = 'resize width +50'
+alt-shift-down = 'resize height -50'
+alt-shift-up = 'resize height +50'
 
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
