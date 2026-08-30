@@ -2,33 +2,43 @@
 
 macOS-specific dotfiles. The cross-platform half lives in
 [dotfiles-common](https://github.com/lechl1/dotfiles-common), wired in here as a
-submodule at `shared/`.
+submodule at `common/`.
 
 ```
-dotfiles-macos/
-├── macos/                     the macOS package
-│   ├── .Brewfile              brew bundle manifest
-│   ├── .paneru.toml
-│   ├── .config/aerospace/     tiling WM
-│   ├── .local/bin/            default-terminal, terminal-to-ghostty
-│   └── Library/LaunchAgents/  local.terminal-to-ghostty.plist
-└── shared/                    submodule -> dotfiles-common (common/ + stow.sh)
+dotfiles-macos/                the stow directory
+├── common/                    submodule -> dotfiles-common (flat: it IS the package)
+└── macos/                     the macOS package
+    ├── .Brewfile              brew bundle manifest
+    ├── .paneru.toml
+    ├── .config/aerospace/     tiling WM
+    ├── .local/bin/            default-terminal, terminal-to-ghostty
+    └── Library/LaunchAgents/  local.terminal-to-ghostty.plist
 ```
+
+Both packages sit directly in the repo root, which is what GNU Stow expects, so
+either installer works.
 
 ## Install
 
 ```sh
 git clone --recurse-submodules https://github.com/lechl1/dotfiles-macos.git ~/.dotfiles-macos
-~/.dotfiles-macos/shared/stow.sh
+cd ~/.dotfiles-macos
+
+stow -t ~ common macos      # GNU Stow
+./common/stow.sh            # or the bundled installer
+
 brew bundle --file ~/.Brewfile
 ```
 
-`stow.sh` installs two packages: `common` from the submodule, and `macos` from
-this repo. If the clone already exists without submodule contents,
-`git submodule update --init` fills `shared/` in.
+`--recurse-submodules` matters: `macos/Library/Fonts/CodeNewRoman.otf` is a link
+into `common/fonts/`, and an empty `common/` leaves it dangling.
 
-Already had these dotfiles installed from a different checkout? Add `--relink`
-to repoint the existing symlinks instead of having them reported as conflicts.
+The bundled `common/stow.sh` is not a reimplementation for its own sake — it
+links file by file instead of folding directories, copies fonts into
+`~/Library/Fonts` (CoreText ignores symlinked fonts), and absorbs pre-existing
+real files rather than refusing. Its `--relink` flag repoints links that already
+exist but aim elsewhere, which is what you want when an older checkout is being
+replaced. See the dotfiles-common README for the details.
 
 ## What's here
 
